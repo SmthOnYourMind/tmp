@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class Room
 {
-
     public int height;
     public int width;
 
@@ -26,7 +25,7 @@ public class Room
     {
         for (Platform p: platforms)
         {
-            if (p.y == player.getY() && p.x <= player.getX() && p.x + p.width >= player.getX())
+            if (p.y + 30 >= player.getY() && p.y - 30 <= player.getY() && p.x <= player.getX() + 50 && p.x + p.width >= player.getX())
                 return p;
         }
 

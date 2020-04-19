@@ -57,13 +57,14 @@ public class Player
     }
 
 
-    public boolean inJumping = false;
-    public boolean inFalling = false;
+    public boolean isJumping = false;
+    public boolean isFalling = false;
+
 // С ускорением
 
     public void jump(final Room room)
     {
-        inJumping = true;
+        isJumping = true;
         speedY = 50;
         accelerationY = -5;
         TimerTask task = new TimerTask() {
@@ -79,7 +80,7 @@ public class Player
                     changeY(y);
                     speedY = 0;
                     accelerationY = 0;
-                    inJumping = false;
+                    isJumping = false;
                     cancel();
                 }
             }
@@ -91,54 +92,12 @@ public class Player
         timer.scheduleAtFixedRate(task, delay, period);
     }
 
-
-// Без ускорения
-
-/*
-    public void jump(final Room room)
-    {
-        inJumping = true;
-        speedY = 10;
-        deltaY = 0;
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run()
-            {
-                changeY(y- speedY);
-                speedY += accelerationY;
-                deltaY = deltaY + speedY;
-
-                if (deltaY == 300)
-                {
-                    speedY = -10;
-                    deltaY = 0;
-                }
-
-                if (deltaY < 0 && onFloor(room))
-                {
-                    speedY = 0;
-                    accelerationY = 0;
-                    inJumping = false;
-                    cancel();
-                }
-            }
-        };
-
-        Timer timer = new Timer();
-        int delay = 3;
-        int period = 12;
-        timer.scheduleAtFixedRate(task, delay, period);
-    }
-
- */
-
 // Падение с платформы
 
-    /*
     public void fall(final Room room)
     {
-        inFalling = true;
-        accelerationY = -10;
+        isFalling = true;
+        accelerationY = -2;
         TimerTask task = new TimerTask() {
             @Override
             public void run()
@@ -151,7 +110,7 @@ public class Player
                 {
                     speedY = 0;
                     accelerationY = 0;
-                    inFalling = false;
+                    isFalling = false;
                     cancel();
                 }
             }
@@ -159,21 +118,21 @@ public class Player
 
         Timer timer = new Timer();
         int delay = 1;
-        int period = 35;
+        int period = 50;
         timer.scheduleAtFixedRate(task, delay, period);
     }
-*/
+
 
     public boolean onFloor(Room room)
     {
-        if (y == room.height)
+        if (y >= room.height)
             return true;
 
         for (Platform e: room.platforms)
         {
-            if (y <= e.y + 30 && y >= e.y - 30 && x >= e.x && x <= e.x + e.width)
+            if (y <= e.y + 30 && y >= e.y - 30 && x + 50 >= e.x && x <= e.x + e.width)
             {
-                //y = room.getPlatformUnderPlayer(this).y;
+                y = room.getPlatformUnderPlayer(this).y;
                 return true;
             }
         }
@@ -183,28 +142,22 @@ public class Player
 
     public boolean outOfPlatform(Room room)
     {
-        Platform tmp = room.getPlatformUnderPlayer(this);
-        if (!onFloor(room) && (x < tmp.x || x > tmp.x + tmp.width ))
-            return true;
-        else
-            return false;
+        return room.getPlatformUnderPlayer(this) == null;
     }
 
     public boolean nearEdge(Room room, Direction dir)
     {
        if (dir == Direction.LEFT && x == 0)
            return true;
-       else if (dir == Direction.RIGHT && x == room.width - 50)
-           return true;
        else
-           return false;
+           return dir == Direction.RIGHT && x == room.width - 50;
     }
 
     public void move(Room room)
     {
         switch(playerDirection) {
             case UP:
-                if (inJumping)
+                if (isJumping || isFalling)
                     break;
                 this.jump(room);
                 break;
@@ -214,11 +167,15 @@ public class Player
             case LEFT:
                 if (nearEdge(room, Direction.LEFT))
                     break;
+                if (outOfPlatform(room) && !isJumping)
+                    this.fall(room);
                 x-= speedX;
                 break;
             case RIGHT:
                 if (nearEdge(room, Direction.RIGHT))
                     break;
+                if (outOfPlatform(room) && !isJumping)
+                    this.fall(room);
                 x+= speedX;
                 break;
             default:
